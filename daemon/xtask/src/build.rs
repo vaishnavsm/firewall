@@ -3,7 +3,9 @@ use std::process::Command;
 use anyhow::Context as _;
 use clap::Parser;
 
-use crate::build_firewall::{build_firewall, Architecture, Options as BuildOptions};
+use crate::build_firewall::{build_firewall};
+use crate::build_probe_entry::{build_probe_entry};
+use crate::build_ebpf_common::{Architecture, Options as BuildOptions};
 
 #[derive(Debug, Parser)]
 pub struct Options {
@@ -36,7 +38,12 @@ pub fn build(opts: Options) -> Result<(), anyhow::Error> {
         target: opts.bpf_target,
         release: opts.release,
     })
-    .context("Error while building eBPF programs")?;
+    .context("Error while building eBPF firewall program")?;
+    build_probe_entry(BuildOptions {
+        target: opts.bpf_target,
+        release: opts.release,
+    })
+    .context("Error while building eBPF probe_entry program")?;
     build_project(&opts).context("Error while building userspace application")?;
     Ok(())
 }

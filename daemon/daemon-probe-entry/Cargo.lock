@@ -88,7 +88,7 @@ name = "daemon-common"
 version = "0.1.0"
 
 [[package]]
-name = "daemon-firewall"
+name = "daemon-probe-entry"
 version = "0.1.0"
 dependencies = [
  "aya-ebpf",

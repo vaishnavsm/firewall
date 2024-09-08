@@ -2,8 +2,8 @@ use std::{path::PathBuf, process::Command};
 
 use crate::build_ebpf_common::{Options};
 
-pub fn build_firewall(opts: Options) -> Result<(), anyhow::Error> {
-    let dir = PathBuf::from("daemon-firewall");
+pub fn build_probe_entry(opts: Options) -> Result<(), anyhow::Error> {
+    let dir = PathBuf::from("daemon-probe-entry");
     let target = format!("--target={}", opts.target);
     let mut args = vec!["build", target.as_str(), "-Z", "build-std=core"];
     if opts.release {
@@ -19,7 +19,7 @@ pub fn build_firewall(opts: Options) -> Result<(), anyhow::Error> {
         .env_remove("RUSTUP_TOOLCHAIN")
         .args(&args)
         .status()
-        .expect("failed to build firewall bpf program");
+        .expect("failed to build probe_entry bpf program");
     assert!(status.success());
     Ok(())
 }

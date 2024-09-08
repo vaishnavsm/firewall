@@ -5,7 +5,7 @@ use clap::Parser;
 
 use crate::{
     build::{build, Options as BuildOptions},
-    build_firewall::Architecture,
+    build_ebpf_common::Architecture,
 };
 
 #[derive(Debug, Parser)]
