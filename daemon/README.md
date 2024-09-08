@@ -7,7 +7,7 @@
 ## Build eBPF
 
 ```bash
-cargo xtask build-ebpf
+cargo xtask build-firewall
 ```
 
 To perform a release build you can use the `--release` flag.

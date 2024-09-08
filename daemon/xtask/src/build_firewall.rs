@@ -39,15 +39,10 @@ pub struct Options {
     pub release: bool,
 }
 
-pub fn build_ebpf(opts: Options) -> Result<(), anyhow::Error> {
-    let dir = PathBuf::from("daemon-ebpf");
+pub fn build_firewall(opts: Options) -> Result<(), anyhow::Error> {
+    let dir = PathBuf::from("daemon-firewall");
     let target = format!("--target={}", opts.target);
-    let mut args = vec![
-        "build",
-        target.as_str(),
-        "-Z",
-        "build-std=core",
-    ];
+    let mut args = vec!["build", target.as_str(), "-Z", "build-std=core"];
     if opts.release {
         args.push("--release")
     }
@@ -61,7 +56,7 @@ pub fn build_ebpf(opts: Options) -> Result<(), anyhow::Error> {
         .env_remove("RUSTUP_TOOLCHAIN")
         .args(&args)
         .status()
-        .expect("failed to build bpf program");
+        .expect("failed to build firewall bpf program");
     assert!(status.success());
     Ok(())
 }
