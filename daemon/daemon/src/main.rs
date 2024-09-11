@@ -1,9 +1,9 @@
 use anyhow::Context;
-use aya::programs::{Xdp, XdpFlags};
+use aya::programs::{KProbe, Xdp, XdpFlags};
 use aya::{include_bytes_aligned, Bpf};
 use aya_log::BpfLogger;
 use clap::Parser;
-use log::{info, warn, debug};
+use log::{debug, info, warn};
 use tokio::signal;
 
 #[derive(Debug, Parser)]
@@ -33,22 +33,34 @@ async fn main() -> Result<(), anyhow::Error> {
     // runtime. This approach is recommended for most real-world use cases. If you would
     // like to specify the eBPF program at runtime rather than at compile-time, you can
     // reach for `Bpf::load_file` instead.
+    // #[cfg(debug_assertions)]
+    // let mut bpf = Bpf::load(include_bytes_aligned!(
+    //     "../../target/bpfel-unknown-none/debug/daemon"
+    // ))?;
+    // #[cfg(not(debug_assertions))]
+    // let mut bpf = Bpf::load(include_bytes_aligned!(
+    //     "../../target/bpfel-unknown-none/release/daemon"
+    // ))?;
     #[cfg(debug_assertions)]
     let mut bpf = Bpf::load(include_bytes_aligned!(
-        "../../target/bpfel-unknown-none/debug/daemon"
+        "../../target/bpfel-unknown-none/debug/daemon-probe-entry"
     ))?;
     #[cfg(not(debug_assertions))]
     let mut bpf = Bpf::load(include_bytes_aligned!(
-        "../../target/bpfel-unknown-none/release/daemon"
+        "../../target/bpfel-unknown-none/release/daemon-probe-entry"
     ))?;
-    if let Err(e) = BpfLogger::init(&mut bpf) {
+    let res = BpfLogger::init(&mut bpf);
+    if let Err(e) = res {
         // This can happen if you remove all log statements from your eBPF program.
         warn!("failed to initialize eBPF logger: {}", e);
     }
-    let program: &mut Xdp = bpf.program_mut("daemon").unwrap().try_into()?;
+    // let program: &mut Xdp = bpf.program_mut("daemon").unwrap().try_into()?;
+    let program: &mut KProbe = bpf.program_mut("kprobetcp").unwrap().try_into()?;
     program.load()?;
-    program.attach(&opt.iface, XdpFlags::default())
-        .context("failed to attach the XDP program with default flags - try changing XdpFlags::default() to XdpFlags::SKB_MODE")?;
+    program.attach("tcp_connect", 0)?;
+    // .context("failed to attach the XDP program with default flags - try changing XdpFlags::default() to XdpFlags::SKB_MODE")?;
+    // program.attach(&opt.iface, XdpFlags::default())
+    //     .context("failed to attach the XDP program with default flags - try changing XdpFlags::default() to XdpFlags::SKB_MODE")?;
 
     info!("Waiting for Ctrl-C...");
     signal::ctrl_c().await?;

@@ -9,7 +9,7 @@ aya-log-ebpf = "0.1.0"
 daemon-common = { path = "../daemon-common" }
 
 [[bin]]
-name = "daemon"
+name = "daemon-probe-entry"
 path = "src/main.rs"
 
 [profile.dev]
