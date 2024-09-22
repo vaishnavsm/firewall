@@ -9,13 +9,13 @@ mod binding;
 
 use crate::binding::{sock, sock_common};
 
-use aya_ebpf::{helpers::bpf_probe_read_kernel, macros::kprobe, programs::ProbeContext};
+use aya_ebpf::{helpers::bpf_probe_read_kernel, macros::kretprobe, programs::ProbeContext};
 use aya_log_ebpf::info;
 
 const AF_INET: u16 = 2;
 const AF_INET6: u16 = 10;
 
-#[kprobe]
+#[kretprobe]
 pub fn kprobetcp(ctx: ProbeContext) -> u32 {
     match try_kprobetcp(ctx) {
         Ok(ret) => ret,
@@ -27,10 +27,12 @@ pub fn kprobetcp(ctx: ProbeContext) -> u32 {
 }
 
 fn try_kprobetcp(ctx: ProbeContext) -> Result<u32, i64> {
-    let sock: *mut sock = ctx.arg(0).ok_or(1i64)?;
+    let sock: *mut sock = ctx.arg(1).ok_or(1i64)?;
+    let ret: i32 = ctx.ret().ok_or(-233)?;
     let sk_common = unsafe {
         bpf_probe_read_kernel(&(*sock).__sk_common as *const sock_common).map_err(|e| e)?
     };
+
     match sk_common.skc_family {
         AF_INET => {
             let src_addr =
@@ -43,11 +45,12 @@ fn try_kprobetcp(ctx: ProbeContext) -> Result<u32, i64> {
                 u16::from_be(unsafe { sk_common.__bindgen_anon_3.__bindgen_anon_1.skc_num });
             info!(
                 &ctx,
-                "AF_INET src address: {:i}, dest address: {:i}, skc_dport: {}, skc_num: {}",
+                "AF_INET src address: {:i}, dest address: {:i}, skc_dport: {}, skc_num: {}, return code is: {}",
                 src_addr,
                 dest_addr,
                 raw_skc_dport,
-                raw_skc_num
+                raw_skc_num,
+                ret
             );
             Ok(0)
         }
